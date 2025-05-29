@@ -25,11 +25,11 @@ check-secrets:
 # Local: Init
 # ----------------------------------------------------------------
 
-npm-init: check-secrets
+yarn-init: check-secrets
 	cp -f .env.minimal .env
-	npm install
-	npm run start
-local-init: npm-init
+	yarn install
+	yarn run start
+local-init: yarn-init
 
 # ----------------------------------------------------------------
 # Docker: Init
