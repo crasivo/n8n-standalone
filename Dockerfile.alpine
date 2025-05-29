@@ -20,7 +20,14 @@ RUN set -eux \
     && ln -sf /run/secrets "$N8N_DIR/secrets" \
     # Install deps
     && yarn install \
-    && chown -R node: "$N8N_DIR"
+    && chown -R node: "$N8N_DIR" \
+    # Cleanup
+    && rm -rf /home/node/.cache \
+    && rm -rf /home/node/.npm \
+    && rm -rf /root/.cache \
+    && rm -rf /root/.npm \
+    && rm -rf /usr/local/share/.cache \
+    && rm -rf /tmp/*
 
 USER node
 
