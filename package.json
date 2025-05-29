@@ -1,0 +1,22 @@
+{
+  "name": "@crasivo/n8n-standalone",
+  "type": "commonjs",
+  "private": true,
+  "engines": {
+    "node": ">=20.15"
+  },
+  "scripts": {
+    "start": "n8n start",
+    "start:prod": "NODE_ENV=production n8n start",
+    "start:dev": "NODE_ENV=development n8n start"
+  },
+  "dependencies": {
+    "n8n": "~1.95.0",
+    "sqlite3": ">=4.0.0"
+  },
+  "peerDependencies": {
+    "@azure/identity": ">=4.2.1",
+    "pdfjs-dist": ">=4.2.67",
+    "semver": ">=5.7.2"
+  }
+}

@@ -1,0 +1,26 @@
+# IDE
+/.idea
+/.vscode
+
+# Hidden
+/backup*
+/dump*
+/log*
+/secret*
+/volume*
+
+# Secret
+*.key
+*.pass
+
+# NodeJS
+/.cache
+/.n8n
+/node_modules
+
+# Environment
+/.env
+
+# Misc
+.DS_Store
+Thumbs.db
