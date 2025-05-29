@@ -1,0 +1,96 @@
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Extended configuration for N8N.
+# ----------------------------------------------------------------
+# Example run:
+# $ make docker-init-extended
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+name: n8n_standalone
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.alpine
+    image: crasivo/n8n-standalone
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.extended
+      - .env
+    networks:
+      - internal
+      - public
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+      - "${N8N_RUNNERS_BROKER_PORT:-5679}:5679"
+    secrets:
+      - n8n_encryption.key
+      - n8n_postgres.pass
+    labels:
+      - "traefik.enable=true"
+      # HTTP (permanent redirect)
+      - "traefik.http.routers.n8n-app-http.rule=Host(`${N8N_PUBLIC_HOST:-n8n.traefik.local}`)"
+      - "traefik.http.routers.n8n-app-http.entryPoints=http"
+      - "traefik.http.routers.n8n-app-http.middlewares=redirect-to-https@file"
+      # HTTPS
+      - "traefik.http.routers.n8n-app-https.rule=Host(`${N8N_PUBLIC_HOST:-domainql.traefik.local}`)"
+      - "traefik.http.routers.n8n-app-https.entryPoints=https"
+      - "traefik.http.routers.n8n-app-https.tls=true"
+      - "traefik.http.routers.n8n-app-https.service=n8n-app-https"
+      - "traefik.http.services.n8n-app-https.loadBalancer.server.port=5678"
+
+  postgres:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      - "POSTGRES_USER=n8n"
+      - "POSTGRES_DB=n8n"
+      - "POSTGRES_PASSWORD_FILE=/run/secrets/n8n_postgres.pass"
+    networks:
+      - internal
+    secrets:
+      - n8n_postgres.pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:cached
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U n8n -d n8n" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+  redis:
+    image: redis:8-alpine
+    restart: always
+    networks:
+      - internal
+    volumes:
+      - redis_data:/data:cached
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  n8n_data:
+  postgres_data:
+  redis_data:
+
+secrets:
+  n8n_encryption.key:
+    file: ./secrets/n8n_encryption.key
+  n8n_postgres.pass:
+    file: ./secrets/n8n_postgres.pass
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  public:
+    driver: bridge
+    internal: false

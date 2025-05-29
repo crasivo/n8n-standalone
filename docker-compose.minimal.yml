@@ -1,0 +1,47 @@
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Minimal configuration for N8N.
+# ----------------------------------------------------------------
+# Example run:
+# $ make docker-init-minimal
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+name: n8n_standalone
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.alpine
+    image: crasivo/n8n-standalone
+    restart: always
+    env_file:
+      - .env.minimal
+      - .env
+    networks:
+      - public
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+      - "${N8N_RUNNERS_BROKER_PORT:-5679}:5679"
+    secrets:
+      - n8n_encryption.key
+    labels:
+      - "traefik.enable=true"
+      # HTTP (permanent redirect)
+      - "traefik.http.routers.n8n-app-http.rule=Host(`${N8N_PUBLIC_HOST:-n8n.traefik.local}`)"
+      - "traefik.http.routers.n8n-app-http.entryPoints=http"
+      - "traefik.http.routers.n8n-app-http.middlewares=redirect-to-https@file"
+      # HTTPS
+      - "traefik.http.routers.n8n-app-https.rule=Host(`${N8N_PUBLIC_HOST:-domainql.traefik.local}`)"
+      - "traefik.http.routers.n8n-app-https.entryPoints=https"
+      - "traefik.http.routers.n8n-app-https.tls=true"
+      - "traefik.http.routers.n8n-app-https.service=n8n-app-https"
+      - "traefik.http.services.n8n-app-https.loadBalancer.server.port=5678"
+
+secrets:
+  n8n_encryption.key:
+    file: ./secrets/n8n_encryption.key
+
+networks:
+  public:
+    driver: bridge
+    internal: false

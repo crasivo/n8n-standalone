@@ -1,0 +1,29 @@
+
+ARG NODE_DOCKER_RELEASE=22
+
+FROM node:${NODE_DOCKER_RELEASE}-alpine
+
+ENV N8N_DIR=/app \
+    N8N_PORT=5678 \
+    N8N_RUNNERS_BROKER_PORT=5679 \
+    N8N_RUNNERS_ENABLED=true \
+    N8N_USER_FOLDER=/app
+
+COPY package.json $N8N_DIR/.
+COPY yarn.lock $N8N_DIR/.
+
+WORKDIR $N8N_DIR
+
+RUN set -eux \
+    # Prepare secrets
+    && mkdir -p /run/secrets \
+    && ln -sf /run/secrets "$N8N_DIR/secrets" \
+    # Install deps
+    && yarn install \
+    && chown -R node: "$N8N_DIR"
+
+USER node
+
+EXPOSE $N8N_PORT $N8N_RUNNERS_BROKER_PORT
+
+CMD ["yarn", "run", "start"]
